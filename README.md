@@ -7,9 +7,9 @@ Head to your Customercontrolpanel at [www.customercontrolpanel.de] or [www.custo
 
 # usage
 
-Edit the `config.yml` and enter your own credentials there. Make sure that this file is read-only to your user or root:
+Edit the `config.ini` and enter your own credentials there. Make sure that this file is read-only to your user or root:
 ```
-$ chmod 400 config.yml
+$ chmod 400 config.ini
 ```
 
 ```
