@@ -4,10 +4,10 @@ version = "0.2"
 
 import sys
 import json
+import yaml
 import requests
 from datetime import datetime
 import argparse
-import configparser
 from copy import deepcopy
 import os
 
@@ -38,7 +38,7 @@ parser.add_argument('-t','--type',
                     help = 'Required. type of the entry.')
        
 parser.add_argument('-c', '--current',
-                    dest='previous',
+                    dest='current',
                     metavar='127.0.0.1',
                     help='current destination of the entry which needs to be updated/deleted. If missing all entries will be updated or deleted.')
 
@@ -64,7 +64,7 @@ current_destination = args.current
 new_destination = args.destination
 entrytype = args.entrytype
 
-if (mode != "remove") and (not destination):
+if (mode != "remove") and (not new_destination):
     parser.error("No destination provided.")
 
 #split the fqdn to host and domain portion
@@ -81,13 +81,20 @@ if fqdn:
 
 
 #load the config
-config = configparser.ConfigParser()
-config.read(os.path.dirname(os.path.realpath(__file__))+os.path.sep+'config.ini')
 
-uri = config['global'].get('uri')
-apikey = config['credentials'].get('apikey')
-apipassword = config['credentials'].get('apipassword')
-customernumber = config['credentials'].get('customernumber')
+configstream = open(os.path.dirname(os.path.realpath(__file__))+os.path.sep+"config.yml", 'r')
+config = yaml.safe_load (configstream)
+uri = config.get('uri')
+credentials = config.get('credentials')
+config_index = -1
+for x in range(len(credentials)):
+    for y in range(len(credentials[x]['domains'])):
+        if credentials[x]['domains'][y] == domain:
+            config_index = x
+
+apikey = credentials[config_index].get('apikey')
+apipassword = credentials[config_index].get('apipassword')
+customernumber = credentials[config_index].get('customernumber')
 
 if uri == None: exit("URI not present in config. aborting...")
 if apikey == None: exit("API-Key not present in config. aborting...")
@@ -104,7 +111,7 @@ standardArray = {}
 standardArray["param"] = {}
 standardArray["param"]["customernumber"] = customernumber
 standardArray["param"]["apikey"] = apikey
-standardArray["param"]["clientrequestid"] = "dns-hook"
+standardArray["param"]["clientrequestid"] = "dnshook"
 
 def payloadbuilder (pl_type):
     newArray = deepcopy(standardArray)
@@ -172,14 +179,14 @@ if mode == "remove" or mode == "update":
     
     for x in range(len(newRecords)):
         
-        if mode="remove":
+        if mode == "remove":
             newRecords[x]["deleterecord"] = True
-        if mode="update":
+        if mode == "update":
             newRecords[x]["destination"] = new_destination
 
 
 #update DNS only, if there is something to update
-if len(newRecords)!=0:
+if len(newRecords)!= 0:
     #add the dnsrecords to the JSON
     updateDnsRecordsArray["param"]["dnsrecordset"] = {}
     updateDnsRecordsArray["param"]["dnsrecordset"]["dnsrecords"] = []

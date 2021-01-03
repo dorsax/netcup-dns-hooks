@@ -1,0 +1,15 @@
+uri: https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON
+
+credentials:
+    -   customernumber: 12345
+        apikey: dnqwlidnawjkdnwidnwdi
+        apipassword: 943iufß9032ufdiwokehnfd3wiofjnedf
+        domains:
+            - customer.org
+            - domain.info
+    -   customernumber: 23456
+        apikey: 943iufß9032ufdiwokehnfd3wiofjnedf
+        apipassword: weddd3re23rp29freiwf0c394fjfw90cjef
+        domains:
+            - test.com
+            - info.de
