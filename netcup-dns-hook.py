@@ -1,5 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.8
 
+version="0.2"
+
+import sys
 import json
 import requests
 from datetime import datetime
@@ -9,20 +12,73 @@ from copy import deepcopy
 import os
 
 #responsible for the arguments
-parser = argparse.ArgumentParser(description='Hooks into the netcup DNS API to set the DNS Record for the ACME challenge.')
-parser.add_argument('domainname',
-                                   help='domain to be modified.')
-parser.add_argument('validation',
-                                   help='validation string')
-parser.add_argument('--cleanup', dest='onlycleanup', action='store_true',
-                                   help='yes/no')
-parser.add_argument('--debug', dest='debug', action='store_true',
-                                   help="Enable debug messages")
+parser = argparse.ArgumentParser(description='Hooks into the netcup DNS API to set any DNS Record.')
+operational= parser.add_mutually_exclusive_group(required=True)
+fqdn_host= parser.add_mutually_exclusive_group(required=True)
+parser.add_argument('-o','--host',
+                    dest='host',
+                    metavar='host',
+                    default='@',
+                    help='host portion of the entry. Defaults to \'@\' for usage in root scenarios.')
+fqdn_host.add_argument('-d','--domainname','--domain',
+                    dest='domain',
+                    metavar='domain.com',
+                    help='domain to be modified')
+fqdn_host.add_argument('-f', '--fqdn',
+                    dest="fqdn",
+                    metavar='host.domain.com',
+                    help='fully qualified domain name, as a replacement option for domain name and host')
+
+parser.add_argument('-t','--type',
+                    dest='entrytype',
+                    choices=['TXT', 'A', 'AAAA'], 
+                    required=True,
+                    help='Required. type of the entry.')
+       
+operational.add_argument('-s', '--destination',
+                    dest='destination',
+                    metavar='127.0.0.1',
+                    help='destination of the entry')
+operational.add_argument('--cleanup', 
+                    dest='delete', 
+                    action='store_true', 
+                    help=argparse.SUPPRESS)
+operational.add_argument('-r','--remove',
+                    dest='delete', 
+                    action='store_true',
+                    help='wether to remove this entry rather than adding or editing it')
+                    
+parser.add_argument('--debug',
+                    dest='debug', 
+                    action='store_true',
+                    help="Enable debug messages")
+parser.add_argument('--version', 
+                    action='version', 
+                    version='You are running version: '+version)
+
 args = parser.parse_args()
 debug=args.debug
-domainname=args.domainname
-onlycleanup=args.onlycleanup
-validationstring=args.validation
+domain=args.domain
+host=args.host
+fqdn=args.fqdn
+onlycleanup=args.delete
+deleteentry=args.delete
+validationstring=args.destination
+destination=args.destination
+entrytype=args.entrytype
+
+#split the fqdn to host and domain portion
+if fqdn: 
+    index=fqdn.rfind(".",0,fqdn.rfind("."))
+    if index==-1:
+        domain=fqdn
+        host="@"
+    else:
+        domain=fqdn[index+1:]
+        host=fqdn[:index]
+        
+
+
 
 #load the config
 config = configparser.ConfigParser()
